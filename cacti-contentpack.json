@@ -1,0 +1,209 @@
+{
+  "id" : null,
+  "name" : "Cacti Logs",
+  "description" : "Collecting Cacti Log messages and show useful information",
+  "category" : "Cacti, Poller",
+  "inputs" : [ {
+    "title" : "GELF-TCP",
+    "configuration" : {
+      "port" : 12203,
+      "override_source" : "",
+      "bind_address" : "10.0.0.1",
+      "tls_cert_file" : "",
+      "use_null_delimiter" : true,
+      "recv_buffer_size" : 1048576,
+      "tls_key_password" : "",
+      "tls_key_file" : "",
+      "max_message_size" : 2097152
+    },
+    "type" : "org.graylog2.inputs.gelf.tcp.GELFTCPInput",
+    "global" : true,
+    "extractors" : [ {
+      "title" : "Cacti-Poller-Time",
+      "type" : "REGEX",
+      "configuration" : {
+        "regex_value" : "^.*Time:(.+) Method"
+      },
+      "converters" : [ {
+        "type" : "NUMERIC",
+        "configuration" : { }
+      } ],
+      "order" : 0,
+      "cursor_strategy" : "COPY",
+      "target_field" : "Cacti_Poller_Time",
+      "source_field" : "full_message",
+      "condition_type" : "STRING",
+      "condition_value" : "SYSTEM STATS:"
+    }, {
+      "title" : "Cacti-Host-ID",
+      "type" : "REGEX",
+      "configuration" : {
+        "regex_value" : "^.*Host\\[(.[0-9]+)\\]"
+      },
+      "converters" : [ ],
+      "order" : 0,
+      "cursor_strategy" : "COPY",
+      "target_field" : "Cacti_Host_ID",
+      "source_field" : "full_message",
+      "condition_type" : "STRING",
+      "condition_value" : "SPINE:"
+    }, {
+      "title" : "Cacti-Total_Time",
+      "type" : "REGEX",
+      "configuration" : {
+        "regex_value" : "^.*Total Time: (.+) Seconds$"
+      },
+      "converters" : [ {
+        "type" : "NUMERIC",
+        "configuration" : { }
+      } ],
+      "order" : 0,
+      "cursor_strategy" : "COPY",
+      "target_field" : "Cacti_Total_Time",
+      "source_field" : "full_message",
+      "condition_type" : "STRING",
+      "condition_value" : "SPINE:"
+    } ],
+    "static_fields" : { }
+  } ],
+  "streams" : [ {
+    "id" : "53b52e9ce4b0ad2126f252e0",
+    "title" : "Cacti Logs",
+    "description" : "Logs from Cacti-Systems",
+    "disabled" : false,
+    "outputs" : [ ],
+    "stream_rules" : [ {
+      "type" : "REGEX",
+      "field" : "source",
+      "value" : "cacti1|cacti2",
+      "inverted" : false
+    } ]
+  } ],
+  "outputs" : [ ],
+  "dashboards" : [ {
+    "title" : "Cacti Logs",
+    "description" : "Cacti Logs",
+    "dashboard_widgets" : [ {
+      "description" : "Output \"U\"",
+      "type" : "SEARCH_RESULT_CHART",
+      "configuration" : {
+        "interval" : "minute",
+        "query" : "\"value: U\" OR \"output: U\"",
+        "timerange" : {
+          "range" : 1800,
+          "type" : "relative"
+        },
+        "stream_id" : "53b52e9ce4b0ad2126f252e0"
+      },
+      "col" : 4,
+      "row" : 1,
+      "cache_time" : 60
+    }, {
+      "description" : "Cacti1 > 10s Poll",
+      "type" : "QUICKVALUES",
+      "configuration" : {
+        "field" : "Cacti_Host_ID",
+        "query" : "_exists_:Cacti_Total_Time AND _exists_:Cacti_Host_ID AND source:cacti1 AND Cacti_Total_Time:>10",
+        "show_data_table" : true,
+        "timerange" : {
+          "range" : 900,
+          "type" : "relative"
+        },
+        "stream_id" : "53b52e9ce4b0ad2126f252e0",
+        "show_pie_chart" : false
+      },
+      "col" : 2,
+      "row" : 1,
+      "cache_time" : 30
+    }, {
+      "description" : "Cacti2 > 10s Poll ",
+      "type" : "QUICKVALUES",
+      "configuration" : {
+        "field" : "Cacti_Host_ID",
+        "query" : "_exists_:Cacti_Total_Time AND _exists_:Cacti_Host_ID AND source:cacti2 AND Cacti_Total_Time:>10",
+        "show_data_table" : true,
+        "timerange" : {
+          "range" : 900,
+          "type" : "relative"
+        },
+        "stream_id" : "53b52e9ce4b0ad2126f252e0",
+        "show_pie_chart" : false
+      },
+      "col" : 2,
+      "row" : 3,
+      "cache_time" : 30
+    }, {
+      "description" : "Cacti1 Poller-Time - 2h",
+      "type" : "FIELD_CHART",
+      "configuration" : {
+        "field" : "cacti_poller_time",
+        "valuetype" : "max",
+        "interval" : "minute",
+        "query" : "source:cacti1 AND \"SYSTEM STATS\"",
+        "timerange" : {
+          "range" : 7200,
+          "type" : "relative"
+        },
+        "stream_id" : "53b52e9ce4b0ad2126f252e0",
+        "interpolation" : "step-after",
+        "renderer" : "area"
+      },
+      "col" : 3,
+      "row" : 1,
+      "cache_time" : 30
+    }, {
+      "description" : "Cacti2 Poller-Time - 2h",
+      "type" : "FIELD_CHART",
+      "configuration" : {
+        "field" : "cacti_poller_time",
+        "valuetype" : "mean",
+        "interval" : "minute",
+        "query" : "source:cacti2 AND \"SYSTEM STATS\"",
+        "timerange" : {
+          "range" : 7200,
+          "type" : "relative"
+        },
+        "stream_id" : "53b52e9ce4b0ad2126f252e0",
+        "interpolation" : "step-after",
+        "renderer" : "area"
+      },
+      "col" : 3,
+      "row" : 3,
+      "cache_time" : 30
+    }, {
+      "description" : "Cacti1 Output U by ID",
+      "type" : "QUICKVALUES",
+      "configuration" : {
+        "field" : "Cacti_Host_ID",
+        "query" : "\"value: U\" OR \"output: U\" AND source:cacti1",
+        "show_data_table" : true,
+        "timerange" : {
+          "range" : 3600,
+          "type" : "relative"
+        },
+        "stream_id" : "53b52e9ce4b0ad2126f252e0",
+        "show_pie_chart" : false
+      },
+      "col" : 1,
+      "row" : 1,
+      "cache_time" : 30
+    }, {
+      "description" : "Cacti2 Output U by ID ",
+      "type" : "QUICKVALUES",
+      "configuration" : {
+        "field" : "Cacti_Host_ID",
+        "query" : "\"value: U\" OR \"output: U\" AND source:cacti2",
+        "show_data_table" : true,
+        "timerange" : {
+          "range" : 3600,
+          "type" : "relative"
+        },
+        "stream_id" : "53b52e9ce4b0ad2126f252e0",
+        "show_pie_chart" : false
+      },
+      "col" : 1,
+      "row" : 3,
+      "cache_time" : 30
+    } ]
+  } ]
+}
