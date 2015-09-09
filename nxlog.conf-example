@@ -1,0 +1,36 @@
+########################################
+# Global directives                    #
+########################################
+User root
+Group root
+
+LogFile /var/log/nxlog/nxlog.log
+LogLevel INFO
+
+########################################
+# Modules                              #
+########################################
+
+<Extension gelf>
+    Module       xm_gelf
+</Extension>
+
+<Input cacti_log>
+	Module	im_file
+	File	"/var/log/cacti.log"
+	SavePos	TRUE
+</Input>
+
+<Output out>
+    Module      om_tcp
+    Host        10.0.0.1
+    Port        12203
+    OutputType  GELF_TCP
+</Output>
+
+########################################
+# Routes                               #
+########################################
+<Route 1>
+    Path	cacti_log => out
+</Route>
